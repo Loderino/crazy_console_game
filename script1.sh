@@ -1,0 +1,1 @@
+export PYTHONPATH="${PYTHONPATH}:/home/kirill/Рабочий\ стол/projects/crazy_console_game/game"

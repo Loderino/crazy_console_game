@@ -24,11 +24,12 @@ def enemy_handler(pl, fi):
                 fi.deactivate_by_non_player(*en.get_pos())
                 en.move(pl.get_pos())
                 fi.set_enemy(*en.get_pos())
+            elif damage == "stop":
+                pass
             else:
                 if pl.get_damage(damage):
                     stop_thread.set()
                     return    
-                time.sleep(2)
 def start(stdscr):
     counter=0
     fi = Field()
@@ -85,7 +86,7 @@ def start(stdscr):
             for y in range(4, game.SCREENSIZE_Y+1):
                 showing_coord = (pl.get_pos()[1]+game.SCREENSIZE_X//2-x, pl.get_pos()[2]+game.SCREENSIZE_Y//2-y)
                 win.addstr(y, x, fi.get_cage_by_coords(showing_coord))        
-        time.sleep(0.02)
+        time.sleep(0.03)
 if __name__ == "__main__":
     curses.wrapper(start)
     stop_thread.set()

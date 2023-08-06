@@ -3,7 +3,7 @@ import random
 class Cage:
     """Класс клетки (один символ в консоли)"""
     active = False
-    __sym = "."
+    __sym = " "
     def __init__(self, x, y):
         """конструктор
         Args:
@@ -29,7 +29,7 @@ class Cage:
     def deactivate(self):
         """Метод деактивации. Возвращает стандартный вид, когда игрок уходит с неё"""
         self.active = False
-        self.__sym = "."
+        self.__sym = " "
 
     def show(self):
         """Возвращает свой символ"""

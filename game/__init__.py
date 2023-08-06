@@ -2,5 +2,8 @@ W_KEY = 119
 A_KEY = 97
 S_KEY = 115
 D_KEY = 100
+ESC_KEY = 27
 SCREENSIZE_X = 209
 SCREENSIZE_Y = 61
+
+USER_CONFIGS = "configs/player.json"

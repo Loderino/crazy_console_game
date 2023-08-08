@@ -22,14 +22,25 @@ while True:
     else:
         break
 spaces = (SCREENSIZE_X-spp*100//dspp)//2
+enemies = []
 
 def enemy_handler(pl, fi):
-    enemies = []
-    enemies.append(Enemy("Z", 10, 0))
-    enemies.append(Enemy("Z", random.randint(-15, 14), random.randint(-7, 7)))
+    counter = 0
     while not stop_thread.is_set():
-        for en in enemies:    
-            time.sleep(0.2)
+        if counter == 0:
+            enemies.append(Enemy("Z", random.randint(-15, 14), random.randint(-7, 7)))
+        for en in enemies:
+            if en.health<=0:
+                fi.set_enemy(*en.get_pos())
+                time.sleep(0.1)
+                fi.deactivate_by_non_player(*en.get_pos())
+                enemies.remove(en)
+                if len(enemies) == 0:
+                    time.sleep(10)
+                    enemies.append(Enemy("Z", random.randint(-15, 14), random.randint(-7, 7)))
+                continue    
+            counter = (counter+1)%10
+            time.sleep((0.4)/len(enemies))
             damage = en.check_for_player(pl.get_pos())
             if not damage:
                 fi.deactivate_by_non_player(*en.get_pos())
@@ -47,7 +58,7 @@ def enemy_handler(pl, fi):
 def start(stdscr):
     counter=0
     fi = Field()
-    pl = Player("@", 0, 0)
+    pl = Player("@", 0, 0, fi)
     fi.set_player(*pl.get_pos())
     player_coords = pl.get_pos()
     curses.curs_set(0)
@@ -103,11 +114,16 @@ def start(stdscr):
                 if fi.set_player(*player_coords) == 0:
                     pl.move("left")
                 termios.tcflush(sys.stdin, termios.TCIOFLUSH)
+            case game.SPACE_KEY:
+                pl.attack()
+                termios.tcflush(sys.stdin, termios.TCIOFLUSH)
             case game.ESC_KEY:
                 stop_thread.set()
                 return
             #case _:
             #    print(char)
+        if pl.attack_stage:
+            pl.attack()
         win.addstr(0, 0, f"({player_coords[1]}, {player_coords[2]}, {counter})")
         counter+=1
         try:
@@ -121,10 +137,16 @@ def start(stdscr):
             for x in range(SCREENSIZE_X-1):
                 for y in range(4, SCREENSIZE_Y):
                     showing_coord = (pl.get_pos()[1]+SCREENSIZE_X//2-x, pl.get_pos()[2]+SCREENSIZE_Y//2-y)
-                    win.addstr(y, x, fi.get_cage_by_coords(showing_coord))
-        except Exception:
+                    sym, enemy = fi.get_cage_by_coords(showing_coord)
+                    if enemy:
+                        with open("nohup.out", "a", encoding = "UTF-8") as file:
+                            file.write(f"{x} {y} \n")
+                        for en in filter(lambda eni: (eni.get_pos()[1], eni.get_pos()[2]) == showing_coord, enemies):
+                            en.get_damage(pl.damage)
+                    win.addstr(y, x, sym)
+        except Exception(exec):
             with open("nohup.out", "a", encoding = "UTF-8") as file:
-                file.write(f"{x} {y} {SCREENSIZE_Y} {SCREENSIZE_X}\n")
+                file.write(f"{x} {y} {SCREENSIZE_Y} {SCREENSIZE_X}\n {exec}\n")
         win.refresh()     
         time.sleep(0.03)
 if __name__ == "__main__":

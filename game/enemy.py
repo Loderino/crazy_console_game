@@ -14,7 +14,7 @@ class Enemy:
         return (self.__sym, self.__x_coordinate, self.__y_coordinate)
     
     def move(self, player_pos):
-        if not self.pause:
+        if not self.pause and self.health>0:
             if (abs(player_pos[1]-self.__x_coordinate) > abs(player_pos[2]-self.__y_coordinate)):
                 if self.__x_coordinate < player_pos[1]:
                     self.__x_coordinate += self.speed
@@ -28,7 +28,7 @@ class Enemy:
         return self.get_pos()
     
     def kick(self):
-        if not self.pause:
+        if not self.pause and self.health>0 :
             self.pause = True
             return self.attack
         
@@ -42,3 +42,11 @@ class Enemy:
                 self.pause = False
                 self.counter = 0
             return "stop"
+
+    def get_damage(self, damage):
+        self.health-=damage
+        self.__sym = "K"
+        if self.health<=0:
+           self.__sym = "X"
+           self.pause = False 
+           self.counter = 0

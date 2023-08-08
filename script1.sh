@@ -1,1 +1,2 @@
-export PYTHONPATH="${PYTHONPATH}:/home/kirill/Рабочий\ стол/projects/crazy_console_game/game"
+current_path=$(pwd)
+export PYTHONPATH="${PYTHONPATH}: $current_path/game"

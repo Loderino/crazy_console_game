@@ -3,7 +3,7 @@ import random
 class Cage:
     """Класс клетки (один символ в консоли)"""
     active = False
-    __sym = " "
+    __sym = "."
     def __init__(self, x, y):
         """конструктор
         Args:
@@ -29,7 +29,7 @@ class Cage:
     def deactivate(self):
         """Метод деактивации. Возвращает стандартный вид, когда игрок уходит с неё"""
         self.active = False
-        self.__sym = " "
+        self.__sym = "."
 
     def show(self):
         """Возвращает свой символ"""
@@ -37,11 +37,11 @@ class Cage:
 
 class Area:
     """Матрица из клеток"""
-    __x_size = 30
-    __y_size = 30
+    x_size = 30
+    y_size = 15
     def __init__(self, ID):
         self.ID = ID
-        self.square = [[Cage(x, y) for x in range(self.__x_size)] for y in range(self.__y_size)]
+        self.square = [[Cage(x, y) for x in range(self.x_size)] for y in range(self.y_size)]
 
 class Field:
     """Класс поля. Содержит список зон"""

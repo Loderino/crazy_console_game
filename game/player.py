@@ -2,6 +2,7 @@ import json
 from game import USER_CONFIGS
 
 class Player:
+    direction = "up"
     player_configs={}
     def __init__(self, sym, x_coordinate, y_coordinate):
         self.__sym = sym
@@ -20,7 +21,7 @@ class Player:
                 self.__x_coordinate-=self.player_configs["speed"]
             case "left":
                 self.__x_coordinate+=self.player_configs["speed"]
-
+        self.direction=direction
     def get_pos(self):
         return (self.__sym, self.__x_coordinate, self.__y_coordinate)
     
@@ -29,5 +30,3 @@ class Player:
     
     def get_damage(self, damage):
         self.health -= damage*(100-self.player_configs["defense"])//100
-
-

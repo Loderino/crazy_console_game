@@ -4,6 +4,8 @@ import termios
 import threading
 import time
 import random
+import signal
+import shutil
 
 import game
 from game.field import Field
@@ -11,11 +13,20 @@ from game.player import Player
 from game.enemy import Enemy
 
 stop_thread = threading.Event()
+SCREENSIZE_X, SCREENSIZE_Y = shutil.get_terminal_size()
+dspp = 1
+while True:
+    spp = SCREENSIZE_X//(100//dspp)
+    if spp == 0:
+        dspp+=1
+    else:
+        break
+spaces = (SCREENSIZE_X-spp*100//dspp)//2
 
 def enemy_handler(pl, fi):
     enemies = []
     enemies.append(Enemy("Z", 10, 0))
-    enemies.append(Enemy("Z", random.randint(-15, 14), random.randint(-15, 14)))
+    enemies.append(Enemy("Z", random.randint(-15, 14), random.randint(-7, 7)))
     while not stop_thread.is_set():
         for en in enemies:    
             time.sleep(0.2)
@@ -29,7 +40,10 @@ def enemy_handler(pl, fi):
             else:
                 if pl.get_damage(damage):
                     stop_thread.set()
-                    return    
+                    return
+
+
+
 def start(stdscr):
     counter=0
     fi = Field()
@@ -37,14 +51,33 @@ def start(stdscr):
     fi.set_player(*pl.get_pos())
     player_coords = pl.get_pos()
     curses.curs_set(0)
-    win = curses.newwin(70, 210, 0,0)
+    win = curses.newwin(SCREENSIZE_Y, SCREENSIZE_X, 0,0)
     enemy_thread = threading.Thread(target=enemy_handler, args=(pl, fi))
     enemy_thread.start()
+
+    def handle_resize(window, signum, frame):
+        global SCREENSIZE_X, SCREENSIZE_Y, spp, spaces, dspp
+        curses.endwin()
+        curses.initscr()
+        SCREENSIZE_X, SCREENSIZE_Y = shutil.get_terminal_size()
+        dspp = 1
+        while True:
+            spp = SCREENSIZE_X//(100//dspp)
+            if spp == 0:
+                dspp+=1
+            else:
+                break
+        spaces = (SCREENSIZE_X-spp*100//dspp)//2
+        win = curses.newwin(SCREENSIZE_Y, SCREENSIZE_X)
+        win.refresh()
+
+
+    signal.signal(signal.SIGWINCH, lambda s, f: handle_resize(win, s, f))
     while True:
         # Get the character
         win.nodelay(True)
         char = win.getch()
-        win.refresh()
+        #win.refresh()
         match char:
             case game.W_KEY:
                 pl.move("up")
@@ -75,17 +108,24 @@ def start(stdscr):
                 return
             #case _:
             #    print(char)
-
         win.addstr(0, 0, f"({player_coords[1]}, {player_coords[2]}, {counter})")
         counter+=1
-        win.addstr(1,100, "YOUR HP")
+        try:
+            win.addstr(1,0, " "*((SCREENSIZE_X-7)//2) + "YOUR HP")
+        except Exception:
+            pass
         if pl.get_health() <=0:
             return
-        win.addstr(2,1, "["+"#"*2*pl.get_health()+" "*2*(100 - pl.get_health())+"]")
-        for x in range(0, game.SCREENSIZE_X+1):
-            for y in range(4, game.SCREENSIZE_Y+1):
-                showing_coord = (pl.get_pos()[1]+game.SCREENSIZE_X//2-x, pl.get_pos()[2]+game.SCREENSIZE_Y//2-y)
-                win.addstr(y, x, fi.get_cage_by_coords(showing_coord))        
+        win.addstr(2,1, " "*spaces+"["+"#"*(spp*pl.get_health()//dspp)+" "*(spp*(100 - pl.get_health())//dspp)+"]")
+        try:
+            for x in range(SCREENSIZE_X-1):
+                for y in range(4, SCREENSIZE_Y):
+                    showing_coord = (pl.get_pos()[1]+SCREENSIZE_X//2-x, pl.get_pos()[2]+SCREENSIZE_Y//2-y)
+                    win.addstr(y, x, fi.get_cage_by_coords(showing_coord))
+        except Exception:
+            with open("nohup.out", "a", encoding = "UTF-8") as file:
+                file.write(f"{x} {y} {SCREENSIZE_Y} {SCREENSIZE_X}\n")
+        win.refresh()     
         time.sleep(0.03)
 if __name__ == "__main__":
     curses.wrapper(start)

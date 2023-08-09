@@ -1,4 +1,6 @@
+import random
 from game.utils import from_user_to_cage_coordinate
+from game.chest import Chest
 class Cage:
     """Класс клетки (один символ в консоли)"""
     active = False
@@ -27,6 +29,13 @@ class Cage:
                 self.__sym = sym
             case "effect":
                 self.effect_sym = sym   
+            case "wall":
+                self.active = True
+                self.__sym = sym
+            case "chest":
+                self.active = True
+                self.__sym = sym
+        
 
     def deactivate(self):
         """Метод деактивации. Возвращает стандартный вид, когда игрок уходит с неё"""
@@ -49,7 +58,24 @@ class Area:
     y_size = 20
     def __init__(self, ID):
         self.ID = ID
-        self.square = [[Cage(x, y) for x in range(self.x_size)] for y in range(self.y_size)]
+        is_chest = random.randint(0, 1)
+        if is_chest == 0:
+            self.chest = Chest(ID)
+        self.square = []
+        for y in range(self.y_size):
+            self.square.append([])
+            for x in range(self.x_size):
+                self.square[-1].append(Cage(x, y))
+                if (y==0  or y==self.y_size-1) and abs(x-self.x_size//2)>3:
+                    self.square[-1][-1].activate("#", initiator = "wall")
+                elif (x==0  or x==self.x_size-1) and abs(y-self.y_size//2)>3:
+                    self.square[-1][-1].activate("#", initiator = "wall")
+
+                if not is_chest and ID!=(0,0):
+                    if abs(x-self.x_size//2)<=1 and abs(y-self.y_size//2)<=1:
+                        self.square[-1][-1].activate("+", initiator = "chest")
+        #self.square = [[Cage(x, y) for x in range(self.x_size)] for y in range(self.y_size)]
+
 
 class Field:
     """Класс поля. Содержит список зон"""
@@ -116,6 +142,13 @@ class Field:
         except IndexError:
             return (" ", 0)
         return area_with_player.square[cage_id[1]][cage_id[0]].show()
+
+    def change_weapon(self, area_id, lvl, wep):
+        area_with_player = list(filter(lambda x: x.ID == area_id, self.squares))[0]
+        if not area_with_player.chest.is_open: 
+            area_with_player.chest.open(lvl)
+        return area_with_player.chest.change_value(wep)
+        
 
 if __name__ == "__main__":
     f = Field()

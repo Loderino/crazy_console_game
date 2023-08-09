@@ -10,3 +10,4 @@ def start(stdscr):
 
 if __name__ == "__main__":
     curses.wrapper(start)
+    

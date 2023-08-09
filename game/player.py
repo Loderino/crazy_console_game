@@ -1,11 +1,14 @@
 import json
 import time
-from game import USER_CONFIGS
-from game import field
+from game import USER_CONFIGS, LEVELS
+from game.weapon import Weapon
 class Player:
+    level = 0
+    exp = 0
     attack_stage = 0
     direction = "up"
     player_configs={}
+    levels = {}
     def __init__(self, sym, x_coordinate, y_coordinate, fi):
         self.__sym = sym
         self.__x_coordinate = x_coordinate
@@ -13,8 +16,13 @@ class Player:
         self.fi = fi
         with open(USER_CONFIGS, "r", encoding = "UTF-8") as file:
             self.player_configs = json.load(file)
-        self.health = self.player_configs["max_health"]
-        self.damage = self.player_configs["attack"]
+            self.health = self.player_configs["max_health"]
+            self.attack_k = self.player_configs["attack"]
+        with open(LEVELS, "r", encoding = "UTF-8") as file:
+            self.levels = json.load(file)
+        self.weapon = Weapon("Палка", "D", "", 2)
+        self.damage = self.attack_k*self.weapon.get_information()[0]
+
     def move(self, direction):
         match direction:
             case "up":
@@ -36,55 +44,119 @@ class Player:
         self.health -= damage*(100-self.player_configs["defense"])//100
 
     def attack(self):
-        if self.direction in ["up", "right"]:
-            match self.attack_stage:
-                case 0:
-                    # \ 
-                    #  @
-                    self.fi.set_effect("\\", self.__x_coordinate+1, self.__y_coordinate+1)
-                case 1:
-                    # | 
-                    # @
-                    self.fi.set_effect("|", self.__x_coordinate, self.__y_coordinate+1)
-                case 2:
-                    #  / 
-                    # @ 
-                    self.fi.set_effect("/", self.__x_coordinate-1, self.__y_coordinate+1)
-                case 3:  
-                    # @-
-                    self.fi.set_effect("-", self.__x_coordinate-1, self.__y_coordinate)
-                case 4:
-                    # @_  
-                    self.fi.set_effect("_", self.__x_coordinate-1, self.__y_coordinate)
-                case 5:
-                    # @
-                    #  \
-                    self.fi.set_effect("\\", self.__x_coordinate-1, self.__y_coordinate-1)
-                    self.attack_stage = -1
-        else:
-            match self.attack_stage:
-                case 0:
-                    #\ 
-                    # @
-                    self.fi.set_effect("\\", self.__x_coordinate+1, self.__y_coordinate+1)
-                case 1:
-                    # -@
-                    self.fi.set_effect("-", self.__x_coordinate+1, self.__y_coordinate)
-                case 2: 
-                    # _@ 
-                    self.fi.set_effect("_", self.__x_coordinate+1, self.__y_coordinate)
-                case 3:  
-                    # @
-                    #/
-                    self.fi.set_effect("/", self.__x_coordinate+1, self.__y_coordinate-1)
-                case 4:
-                    # @
-                    # |  
-                    self.fi.set_effect("|", self.__x_coordinate, self.__y_coordinate-1)
-                case 5:
-                    # @
-                    #  \
-                    self.fi.set_effect("\\", self.__x_coordinate-1, self.__y_coordinate-1)
-                    self.attack_stage = -1
+        
+        match(self.weapon.length):
+            case 1:
+                if self.direction in ["up", "right"]:
+                    match self.attack_stage:
+                        case 0:
+                            self.fi.set_effect("\\", self.__x_coordinate+1, self.__y_coordinate+1)
+                        case 1:
+                            self.fi.set_effect("|", self.__x_coordinate, self.__y_coordinate+1)
+                        case 2:
+                            self.fi.set_effect("/", self.__x_coordinate-1, self.__y_coordinate+1)
+                        case 3:  
+                            self.fi.set_effect("-", self.__x_coordinate-1, self.__y_coordinate)
+                        case 4:
+                            self.fi.set_effect("_", self.__x_coordinate-1, self.__y_coordinate)
+                        case 5:
+                            self.fi.set_effect("\\", self.__x_coordinate-1, self.__y_coordinate-1)
+                            self.attack_stage = -1
+                else:
+                    match self.attack_stage:
+                        case 0:
+                            self.fi.set_effect("\\", self.__x_coordinate+1, self.__y_coordinate+1)
+                        case 1:
+                            self.fi.set_effect("-", self.__x_coordinate+1, self.__y_coordinate)
+                        case 2:  
+                            self.fi.set_effect("_", self.__x_coordinate+1, self.__y_coordinate)
+                        case 3:  
+                            self.fi.set_effect("/", self.__x_coordinate+1, self.__y_coordinate-1)
+                        case 4:
+                            self.fi.set_effect("|", self.__x_coordinate, self.__y_coordinate-1)
+                        case 5:
+                            self.fi.set_effect("\\", self.__x_coordinate-1, self.__y_coordinate-1)
+                            self.attack_stage = -1
+            case 2:
+                if self.direction in ["up", "right"]:
+                    lines = ["\\", "|", "|", "/", "/", "-", '_', "\\", "\\"]
+                    what_sym = lambda x, stage: lines[stage] if x=="|" else x
+                    match self.attack_stage:
+                        case 0:
+                            self.fi.set_effect("\\", self.__x_coordinate+1, self.__y_coordinate+1)
+                            self.fi.set_effect(what_sym(self.weapon.get_information()[2], 0), self.__x_coordinate+2, self.__y_coordinate+2)
+                        case 1:
+                            self.fi.set_effect("\\", self.__x_coordinate+1, self.__y_coordinate+1)
+                            self.fi.set_effect(what_sym(self.weapon.get_information()[2], 1), self.__x_coordinate+1, self.__y_coordinate+2)
+                        case 2:
+                            self.fi.set_effect("|", self.__x_coordinate, self.__y_coordinate+1)
+                            self.fi.set_effect(what_sym(self.weapon.get_information()[2], 2), self.__x_coordinate, self.__y_coordinate+2)
+                        case 3:  
+                            self.fi.set_effect("|", self.__x_coordinate, self.__y_coordinate+1)
+                            self.fi.set_effect(what_sym(self.weapon.get_information()[2], 3), self.__x_coordinate-1, self.__y_coordinate+2)
+                        case 4:
+                            self.fi.set_effect("/", self.__x_coordinate-1, self.__y_coordinate+1)
+                            self.fi.set_effect(what_sym(self.weapon.get_information()[2], 4), self.__x_coordinate-2, self.__y_coordinate+2)
+                        case 5:
+                            self.fi.set_effect("/", self.__x_coordinate-1, self.__y_coordinate+1)
+                            self.fi.set_effect(what_sym(self.weapon.get_information()[2], 5), self.__x_coordinate-2, self.__y_coordinate+1)
+                        case 6:
+                            self.fi.set_effect("-", self.__x_coordinate-1, self.__y_coordinate)
+                            self.fi.set_effect(what_sym(self.weapon.get_information()[2], 6), self.__x_coordinate-2, self.__y_coordinate)
+                        case 7:
+                            self.fi.set_effect("_", self.__x_coordinate-1, self.__y_coordinate)
+                            self.fi.set_effect(what_sym(self.weapon.get_information()[2], 7), self.__x_coordinate-2, self.__y_coordinate-1)
+                        case 8:
+                            self.fi.set_effect("\\", self.__x_coordinate-1, self.__y_coordinate-1)
+                            self.fi.set_effect(what_sym(self.weapon.get_information()[2], 8), self.__x_coordinate-2, self.__y_coordinate-2)
+                            self.attack_stage = -1
+                else:
+                    lines = ["\\", "-", "-", "/", "/", "|", '|', "\\", "\\"]
+                    what_sym = lambda x, stage: lines[stage] if x=="|" else x
+                    match self.attack_stage:
+                        case 0:
+                            self.fi.set_effect("\\", self.__x_coordinate+1, self.__y_coordinate+1)
+                            self.fi.set_effect(what_sym(self.weapon.get_information()[2], 0), self.__x_coordinate+2, self.__y_coordinate+2)
+                        case 1:
+                            self.fi.set_effect("\\", self.__x_coordinate+1, self.__y_coordinate+1)
+                            self.fi.set_effect(what_sym(self.weapon.get_information()[2], 1), self.__x_coordinate+2, self.__y_coordinate+1)
+                        case 2:
+                            self.fi.set_effect("-", self.__x_coordinate+1, self.__y_coordinate)
+                            self.fi.set_effect(what_sym(self.weapon.get_information()[2], 2), self.__x_coordinate+2, self.__y_coordinate)
+                        case 3:  
+                            self.fi.set_effect("_", self.__x_coordinate+1, self.__y_coordinate)
+                            self.fi.set_effect(what_sym(self.weapon.get_information()[2], 3), self.__x_coordinate+2, self.__y_coordinate-1)
+                        case 4:
+                            self.fi.set_effect("/", self.__x_coordinate+1, self.__y_coordinate-1)
+                            self.fi.set_effect(what_sym(self.weapon.get_information()[2], 4), self.__x_coordinate+2, self.__y_coordinate-2)
+                        case 5:
+                            self.fi.set_effect("/", self.__x_coordinate+1, self.__y_coordinate-1)
+                            self.fi.set_effect(what_sym(self.weapon.get_information()[2], 5), self.__x_coordinate+1, self.__y_coordinate-2)
+                        case 6:
+                            self.fi.set_effect("|", self.__x_coordinate, self.__y_coordinate-1)
+                            self.fi.set_effect(what_sym(self.weapon.get_information()[2], 6), self.__x_coordinate, self.__y_coordinate-2)
+                        case 7:
+                            self.fi.set_effect("|", self.__x_coordinate, self.__y_coordinate-1)
+                            self.fi.set_effect(what_sym(self.weapon.get_information()[2], 7), self.__x_coordinate-1, self.__y_coordinate-2)
+                        case 8:
+                            self.fi.set_effect("\\", self.__x_coordinate-1, self.__y_coordinate-1)
+                            self.fi.set_effect(what_sym(self.weapon.get_information()[2], 8), self.__x_coordinate-2, self.__y_coordinate-2)
+                            self.attack_stage = -1
+
         self.attack_stage+=1
 
+    def add_exp(self, exp_num):
+        self.exp+=exp_num
+        try:
+            if self.exp>=self.levels[str(self.level+1)]:
+                self.level+=1
+                self.exp-=self.levels[str(self.level)]
+        except KeyError:
+            pass
+    
+    def get_exp(self):
+        return (self.level,self.exp, self.levels.get(str(self.level+1), "∞"))
+    
+    def change_weapon(self, wep):
+        self.weapon = wep
+        self.damage = self.attack_k*self.weapon.get_information()[0]

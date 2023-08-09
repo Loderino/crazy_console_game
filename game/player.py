@@ -20,7 +20,7 @@ class Player:
             self.attack_k = self.player_configs["attack"]
         with open(LEVELS, "r", encoding = "UTF-8") as file:
             self.levels = json.load(file)
-        self.weapon = Weapon("Палка", "D", "", 2)
+        self.weapon = Weapon("Палка", "D", "", 1)
         self.damage = self.attack_k*self.weapon.get_information()[0]
 
     def move(self, direction):

@@ -17,30 +17,44 @@ class Player:
         self.fi = fi
         with open(USER_CONFIGS, "r", encoding = "UTF-8") as file:
             self.player_configs = json.load(file)
+            self.max_health = self.player_configs["max_health"]
             self.health = self.player_configs["max_health"]
             self.attack_k = self.player_configs["attack"]
-            self.speed = self.player_configs["speed"]
+            self.speed = 1
         with open(LEVELS, "r", encoding = "UTF-8") as file:
             self.levels = json.load(file)
         self.weapon = Weapon("Палка", "D", "", 1)
         self.damage = self.attack_k*self.weapon.get_information()[0]
 
+    def increase_param(self, param, value):
+        match param:
+            case "health":
+                self.max_health+=value
+            case "attack":
+                self.attack_k+=value
+            case "speed":
+                self.speed+=value
     def move(self, direction):
         match direction:
             case "up":
-                self.__y_coordinate+=self.player_configs["speed"]
+                self.__y_coordinate+=self.speed
             case "down":
-                self.__y_coordinate-=self.player_configs["speed"]
+                self.__y_coordinate-=self.speed
             case "right":
-                self.__x_coordinate-=self.player_configs["speed"]
+                self.__x_coordinate-=self.speed
             case "left":
-                self.__x_coordinate+=self.player_configs["speed"]
+                self.__x_coordinate+=self.speed
         self.direction=direction
     def get_pos(self):
         return (self.__sym, self.__x_coordinate, self.__y_coordinate)
     
     def get_health(self):
-        return int(self.health/self.player_configs["max_health"]*100)
+        return int(self.health/self.max_health*100)
+    
+    def regeneration(self):
+        self.health+=self.max_health*0.25
+        if self.health>self.max_health:
+            self.health = self.max_health
     
     def get_damage(self, damage):
         self.health -= damage*(100-self.player_configs["defense"])//100

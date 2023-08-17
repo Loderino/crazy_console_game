@@ -87,7 +87,7 @@ class Enemy:
     def get_damage(self, damage):
         self.health-=(damage*(100-self.defense)//100)
         if self.health<=0 and self.health+damage>0:
-           self.__sym = "X"
+           self.__sym = "0"
            self.pause = False 
            self.counter = 0
            return self.prize_exp

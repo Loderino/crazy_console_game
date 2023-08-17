@@ -4,6 +4,7 @@ from game import USER_CONFIGS, LEVELS
 from game.weapon import Weapon
 class Player:
     level = 0
+    kills = 0
     exp = 0
     attack_stage = 0
     direction = "up"
@@ -18,6 +19,7 @@ class Player:
             self.player_configs = json.load(file)
             self.health = self.player_configs["max_health"]
             self.attack_k = self.player_configs["attack"]
+            self.speed = self.player_configs["speed"]
         with open(LEVELS, "r", encoding = "UTF-8") as file:
             self.levels = json.load(file)
         self.weapon = Weapon("Палка", "D", "", 1)

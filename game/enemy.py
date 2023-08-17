@@ -35,7 +35,7 @@ class Enemy:
                     changing_pos = "y-"
             counter = 0
             directions = ("x", "y", "+", "-")
-            while self.fi.get_cage_by_coords((self.__x_coordinate, self.__y_coordinate))[0] not in  ("."):
+            while self.fi.get_cage_by_coords((self.__x_coordinate, self.__y_coordinate))[0] not in  (".", " "):
                 match changing_pos:
                     case "x+":
                         self.__x_coordinate-=self.speed
@@ -86,7 +86,7 @@ class Enemy:
 
     def get_damage(self, damage):
         self.health-=(damage*(100-self.defense)//100)
-        if self.health<=0:
+        if self.health<=0 and self.health+damage>0:
            self.__sym = "X"
            self.pause = False 
            self.counter = 0

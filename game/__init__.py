@@ -13,4 +13,5 @@ WEAPON_SYMS = ("\\", "|", "/", "-", "_")
 
 USER_CONFIGS = "configs/player.json"
 WEAPON_DICT = "configs/weapons.json"
+ENEMY_SCALE = "configs/enemy_scale.json"
 LEVELS = "configs/level_scale.json"

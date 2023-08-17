@@ -1,3 +1,4 @@
+import json
 import curses
 import sys
 import termios
@@ -24,21 +25,47 @@ while True:
         break
 spaces = (SCREENSIZE_X-spp*100//dspp)//2
 enemies = []
+fi = Field()
+pl = Player("N", 0, 0, fi)
+with open(game.ENEMY_SCALE) as file:
+    enemy_range = json.load(file) 
+
+def create_enemy():
+    global fi, pl
+    enemies_types = []
+    power_level = (pl.level*5+pl.kills)*pl.attack_k*pl.speed*10 
+    for key in enemy_range.keys():
+        if int(key)<=power_level:
+            enemies_types.append(key)
+        else:
+            break
+    p = random.randint(0, int(enemies_types[-1]))
+    selected_type = min(enemies_types, key = lambda x: abs(p-int(x)))
+    
+    en = Enemy(enemy_range[selected_type]["sym"], random.randint(-15, 14), random.randint(-7, 7), fi)
+    en.attack = enemy_range[selected_type]["attack"]
+    en.speed = enemy_range[selected_type]["speed"]
+    en.defense = enemy_range[selected_type]["defense"]
+    en.health = enemy_range[selected_type]["health"]
+    return en
+
+        
+
 
 def enemy_handler(pl, fi):
     counter = 0
     while not stop_thread.is_set():
         if counter == 0:
-            enemies.append(Enemy("Z", random.randint(-15, 14), random.randint(-7, 7), fi))
+            enemies.append(create_enemy())
         for en in enemies:
-            if en.health<=0:
+            if en.health<=0 and len(enemies)<20:
                 fi.set_enemy(*en.get_pos())
                 time.sleep(0.1)
                 fi.deactivate_by_non_player(*en.get_pos())
                 enemies.remove(en)
                 if len(enemies) == 0:
                     time.sleep(10)
-                    enemies.append(Enemy("Z", random.randint(-15, 14), random.randint(-7, 7), fi))
+                    enemies.append(create_enemy())
                 continue    
             counter = (counter+1)%10
             time.sleep((0.4)/len(enemies))
@@ -58,8 +85,6 @@ def enemy_handler(pl, fi):
 
 def start(stdscr):
     counter=0
-    fi = Field()
-    pl = Player("@", 0, 0, fi)
     fi.set_player(*pl.get_pos())
     player_coords = pl.get_pos()
     curses.curs_set(0)
@@ -141,18 +166,18 @@ def start(stdscr):
             #    print(char)
         if pl.attack_stage:
             pl.attack()
-        win.addstr(0, 0, f"({player_coords[1]}, {player_coords[2]}, {counter})")
+        win.addstr(0, 0, f"({player_coords[1]}, {player_coords[2]}, {counter})          ")
         counter+=1
         try:
-            win.addstr(1,0, f"{pl.get_exp()[0]} LVL {pl.get_exp()[1]}/{pl.get_exp()[2]}")
-            win.addstr(2,0, " "*((SCREENSIZE_X-7)//2) + "YOUR HP")
+            win.addstr(1,0, f"{pl.get_exp()[0]} LVL {pl.get_exp()[1]}/{pl.get_exp()[2]}, KILLS: {pl.kills}     ")
+            win.addstr(2,0, " "*((SCREENSIZE_X-7)//2) + "YOUR HP" + " "*((SCREENSIZE_X-7)//2))
             win.addstr(4, 0, f"Текущее оружие: {str(pl.weapon)}")
             win.addstr(4, len(f"Текущее оружие: {str(pl.weapon)}"), " "*(SCREENSIZE_X-len(f"Текущее оружие: {str(pl.weapon)}")))
         except Exception:
             pass
         if pl.get_health() <=0:
             return
-        win.addstr(3,0, " "*spaces+"["+"#"*(spp*pl.get_health()//dspp)+" "*(spp*(100 - pl.get_health())//dspp)+"]")
+        win.addstr(3,0, " "*spaces+"["+"#"*(spp*pl.get_health()//dspp)+" "*(spp*(100 - pl.get_health())//dspp)+"]"+" "*(spaces-2))
         try:
             for x in range(SCREENSIZE_X-1):
                 for y in range(5, SCREENSIZE_Y):
@@ -162,7 +187,8 @@ def start(stdscr):
                         for en in filter(lambda eni: (eni.get_pos()[1], eni.get_pos()[2]) == showing_coord, enemies):
                             prize_exp = en.get_damage(pl.damage)
                             if prize_exp:
-                                pl.add_exp(prize_exp)    
+                                pl.add_exp(prize_exp)
+                                pl.kills+=1    
                     win.addstr(y, x, sym)
         except:
             with open("nohup.out", "a", encoding = "UTF-8") as file:
